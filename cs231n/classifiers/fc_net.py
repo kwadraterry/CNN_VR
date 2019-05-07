@@ -49,7 +49,16 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        W1 = np.random.normal(scale=weight_scale, size=(input_dim, hidden_dim))
+        W2 = np.random.normal(scale=weight_scale, size=(hidden_dim, num_classes))
+        b1 = np.zeros(hidden_dim)
+        b2 = np.zeros(num_classes)
+
+        self.params['W1'] = W1
+        self.params['W2'] = W2
+        self.params['b1'] = b1
+        self.params['b2'] = b2
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -83,7 +92,10 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        output1, cache1 = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        output2, cache2 = affine_forward(output1, self.params['W2'], self.params['b2'])
+        
+        scores = output2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -107,7 +119,22 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        W1 = self.params['W1']
+        W2 = self.params['W2']
+
+        loss, dL = softmax_loss(scores, y)
+        loss += 0.5 * self.reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
+
+        dx2, dW2, db2 = affine_backward(dL, cache2)
+        dx1, dW1, db1 = affine_relu_backward(dx2, cache1)
+        
+        dW1 += self.reg * W1
+        dW2 += self.reg * W2
+        
+        grads['W1'] = dW1; 
+        grads['W2'] = dW2
+        grads['b1'] = db1; 
+        grads['b2'] = db2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -178,7 +205,14 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        layer_counts = [input_dim] + hidden_dims + [num_classes]
+        
+        for i in range(1, len(layer_counts)):
+          if i < len(layer_counts):
+            W = np.random.normal(scale=weight_scale, size=(layer_counts[i-1], layer_counts[i]))
+            b = np.zeros(layer_counts[i])
+            self.params['W%d' % i] = W
+            self.params['b%d'% i] = b
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -241,7 +275,22 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        cache = {}
+        X_current = X
+        num_layers = self.num_layers
+
+        W_out = 'W%d' % num_layers
+        b_out = 'b%d' % num_layers
+
+        for i in range(1, num_layers):
+            X_current, cache[i] = affine_relu_forward(X_current, 
+                                                      self.params['W%d' % i],
+                                                      self.params['b%d' % i])
+        
+
+        scores, cache[num_layers] = affine_forward(X_current,
+                                                   self.params[W_out],
+                                                   self.params[b_out])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -268,7 +317,24 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dL = softmax_loss(scores, y)
+        
+        reg = np.sum(self.params[W_out]**2)
+        
+        dx, grads[W_out], grads[b_out] = affine_backward(dL, cache[num_layers])
+        grads[W_out] += self.reg * self.params[W_out]
+
+        for n in reversed(range(1, num_layers)):
+            dx, grads['W%d' % n], grads['b%d' % n] = affine_relu_backward(dx, cache[n])
+
+   
+            grads['W%d' % n] += self.reg * self.params['W%d' % n]
+
+            reg += np.sum(self.params['W%d' % n]**2)
+
+        reg *= 0.5 * self.reg
+        loss += reg
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################

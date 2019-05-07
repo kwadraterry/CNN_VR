@@ -67,7 +67,8 @@ def sgd_momentum(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    v = config['momentum'] * v - config['learning_rate'] * dw
+    next_w = w + v
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -105,8 +106,12 @@ def rmsprop(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
-
+    #E(g^2)[t] = b*E(g^2)[t-1] + (1 - b) * dw^2
+    #https://towardsdatascience.com/understanding-rmsprop-faster-neural-network-learning-62e116fcf29a
+    config['cache'] = config['decay_rate'] * config['cache'] + (1-config['decay_rate']) * dw**2
+    
+    next_w = w - config['learning_rate'] * dw / (np.sqrt(config['cache']) + config['epsilon'])
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -148,8 +153,26 @@ def adam(w, dw, config=None):
     # using it in any calculations.                                           #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    #http://ruder.io/optimizing-gradient-descent/index.html#adam
 
-    pass
+    m = config['m']
+    v = config['v']
+    t = config['t']
+    beta1 = config['beta1']
+    beta2 = config['beta2']
+
+    m = beta1 * m + (1 - beta1) * dw
+    v = beta2 * v + (1 - beta2) * (dw**2)
+    t += 1
+
+    mb = m / (1 - config['beta1']**t)
+    vb = v / (1 - config['beta2']**t)
+    next_w = w - config['learning_rate']*mb/(np.sqrt(vb) + config['epsilon']) 
+  
+    config['m'] = m 
+    config['v'] = v 
+    config['t'] = t
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
