@@ -214,7 +214,7 @@ class FullyConnectedNet(object):
                 self.params['W%d' % i] = W
                 self.params['b%d'% i] = b
             
-            if self.normalization=='batchnorm' and i != len(layer_counts) - 1:
+            if (self.normalization=='batchnorm'or self.normalization=='layernorm') and i != len(layer_counts) - 1:
                   self.params['gamma%d' % i] = np.ones(layer_counts[i])
                   self.params['beta%d'% i] = np.zeros(layer_counts[i])
 
@@ -297,7 +297,7 @@ class FullyConnectedNet(object):
                                                   self.params['beta%d' % i],
                                                   self.bn_params[i-1])
             elif self.normalization == 'layernorm':
-                X_current, cache['batchnorm_%d' % i] = layernorm_forward(X_current,
+                X_current, cache['layernorm_%d' % i] = layernorm_forward(X_current,
                                                   self.params['gamma%d' % i], 
                                                   self.params['beta%d' % i],
                                                   self.bn_params[i-1])
